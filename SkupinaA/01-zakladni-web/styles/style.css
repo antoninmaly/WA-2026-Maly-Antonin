@@ -17,7 +17,75 @@ body{
     font-family: Arial, Helvetica, sans-serif;
 }
 
+h1{
+    font-size: 36px;
+    margin: unset;
+}
+
+h1,h2{
+    color: darkblue;
+}
+
 p{
     font-family: 'Times New Roman', Times, serif;
-    font-size: 16px; /*1rem = 16px*/
+    font-size: 18px; /*1rem = 16px většinou*/
+}
+
+header, footer{
+    background-color: grey;
+    padding: 0,5rem 1rem; /*horní a spodní okraj, strany, šlo by i všechny čtyři strany, když bychom napsali 4 čísla rem za sebou, tak pak to jde od shora podle hodinových ručiček*/
+}
+
+footer p{
+    margin: unset;
+}
+
+nav a{
+    display: block;
+    background-color: darkgrey;
+    color: blue;
+    text-decoration: none;
+    padding: 0.5rem;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
+.page-wrapper{
+    width: 90%;
+    margin: 0 auto; /*zarovnání na střed*/
+}
+
+nav ul{
+    display: flex;
+    list-style-type: none;
+    gap: 0.5rem ;
+    flex-wrap: wrap;
+    padding: 0;
+}
+
+nav li{
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 100px;
+
+    /*to samé jako ty 3 vlastnosti*/
+    /*flex: 1 1 100px;*/
+}
+
+.grid-container{
+    display: grid;
+    /*grid-template-columns: auto auto auto auto;*/
+    /*grid-template-columns: 4fr 5fr 2fr;*/
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+.card{
+    background-color: white;
+
+    padding: 1rem;
+    /*margin-top: 1rem;*/
+
+    border-radius: 10px 30px 10px 30px;
+    border: 1px solid black;
 }
