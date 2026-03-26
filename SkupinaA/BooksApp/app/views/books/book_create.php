@@ -9,10 +9,10 @@
     <div>
         <div>
             <h2>Přidat novou knihu</h2>
-            <p>Vyplňte údaje a uložte kniho do databáze.</p>
+            <p>Vyplňte údaje a uložte knihu do databáze.</p>
         </div>
         <div>
-            <form action="../../controllers/BookController.php" method="post" enctype="multipart/form-data">
+            <form action="index.php?url=book/store" method="post" enctype="multipart/form-data">
                 <div>
                     <div>
                         <label for="title">Název knihy <span>*</span></label>
@@ -23,12 +23,12 @@
                         <input type="text" id="author" name="author" placeholder="Příjmení Jméno" required>
                     </div>
                     <div>
-                        <label for="isbn">Rok vydání <span>*</span></label>
-                        <input type="number" id="year" name="year" required>
+                        <label for="isbn">ISBN <span>*</span></label>
+                        <input type="text" id="isbn" name="isbn" required>
                     </div>
                     <div>
-                        <label for="category">ISBN <span>*</span></label>
-                        <input type="text" id="isbn" name="isbn">
+                        <label for="category">Kategorie <span>*</span></label>
+                        <input type="text" id="category" name="category">
                     </div>
                     <div>
                         <label for="subcategory">Podkategorie </label>
@@ -40,11 +40,11 @@
                     </div>
                     <div>
                         <label for="price">Cena knihy <span></span></label>
-                        <input type="number" id="price" name="price" step="0,5">
+                        <input type="number" id="price" name="price" step="0.5">
                     </div>
                     <div>
                         <label for="link">Odkaz</label>
-                        <input type="number" id="link" name="link">
+                        <input type="text" id="link" name="link">
                     </div>
                     <div>
                         <label for="description">Popis knihy </label>
