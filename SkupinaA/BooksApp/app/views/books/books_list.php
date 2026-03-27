@@ -11,8 +11,8 @@
 
         <nav>
             <ul>
-                <li><a href="index.php?url=book/index">Seznam knih (Domů)</a></li>
-                <li><a href="index.php?url=book/create">Přidat novou knihu</a></li>
+                <li><a href="<?= BASE_URL ?>/index.php">Seznam knih (Domů)</a></li>
+                <li><a href="<?= BASE_URL ?>/index.php?url=book/create">Přidat novou knihu</a></li>
             </ul>
         </nav>
     </header>
