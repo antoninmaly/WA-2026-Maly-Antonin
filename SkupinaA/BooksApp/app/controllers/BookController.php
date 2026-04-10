@@ -195,7 +195,7 @@ class BookController {
         
     // 5. Zpracování dat odeslaných z editačního formuláře
     public function update($id = null) {
-        // Zabezpečení: Je k dispozici ID a byl odeslán formulář?
+        // 1. Zabezpečení: Kontrola existence ID
         if (!$id) {
             $this->addErrorMessage('Nebylo zadáno ID knihy k aktualizaci.');
             header('Location: ' . BASE_URL . '/index.php');
@@ -204,21 +204,20 @@ class BookController {
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
-            // 1. Získání a očištění textových dat
+            // 2. Načtení a vyčištění textových dat z formuláře
             $title = htmlspecialchars($_POST['title'] ?? '');
             $author = htmlspecialchars($_POST['author'] ?? '');
             $isbn = htmlspecialchars($_POST['isbn'] ?? '');
             $category = htmlspecialchars($_POST['category'] ?? '');
             $subcategory = htmlspecialchars($_POST['subcategory'] ?? '');
             
-            // Přetypování číselných hodnot
             $year = (int)($_POST['year'] ?? 0);
             $price = (float)($_POST['price'] ?? 0);
             
             $link = htmlspecialchars($_POST['link'] ?? '');
             $description = htmlspecialchars($_POST['description'] ?? '');
 
-            // 2. Příprava databáze a modelu
+            // 3. Příprava modelu a databáze
             require_once '../app/models/Database.php';
             require_once '../app/models/Book.php';
 
@@ -226,36 +225,44 @@ class BookController {
             $db = $database->getConnection();
             $bookModel = new Book($db);
 
-            // 3. ZPRACOVÁNÍ OBRÁZKŮ (Zachování starých + přidání nových)
+            // 4. ZPRACOVÁNÍ OBRÁZKŮ (Logika: Nové nahradí staré, prázdné zachová staré)
             
-            // Nejprve získáme aktuální data knihy z DB
-            $existingBook = $bookModel->getById($id);
-            // Původní obrázky jsou uložené jako JSON, převedeme je na pole (pokud neexistují, prázdné pole)
-            $currentImages = json_decode($existingBook['images'] ?? '[]', true);
-
-            // Zavolání pomocné metody pro zpracování nových souborů v $_FILES
+            // Pokusíme se nahrát nové obrázky
             $newImages = $this->processImageUploads(); 
 
-            // Sloučení starých a nových obrázků do jednoho pole
-            $uploadedImages = array_merge($currentImages, $newImages);
+            if (empty($newImages)) {
+                // SCÉNÁŘ A: Uživatel nevybral žádné nové soubory
+                // Musíme si vytáhnout ty stávající z databáze, abychom je nesmazali
+                $existingBook = $bookModel->getById($id);
+                $uploadedImages = json_decode($existingBook['images'] ?? '[]', true);
+            } else {
+                // SCÉNÁŘ B: Uživatel nahrál nové fotky
+                // Použijeme pouze ty nové (tím dojde k přepsání seznamu v DB)
+                $uploadedImages = $newImages;
+            }
 
-            // 4. Volání updatu nad modelem s kompletním polem obrázků
+            // 5. Uložení všech změn do databáze
             $isUpdated = $bookModel->update(
                 $id, $title, $author, $category, $subcategory, 
                 $year, $price, $isbn, $description, $link, $uploadedImages
             );
 
-            // 5. Vyhodnocení výsledku a přesměrování
+            // 6. Vyhodnocení a přesměrování
             if ($isUpdated) {
                 $this->addSuccessMessage('Kniha byla úspěšně upravena.');
                 header('Location: ' . BASE_URL . '/index.php');
                 exit;
             } else {
                 $this->addErrorMessage('Nastala chyba. Změny se nepodařilo uložit.');
+                header('Location: ' . BASE_URL . '/index.php?url=book/edit/' . $id);
+                exit;
             }
             
         } else {
+            // Přístup bez odeslání POST formuláře
             $this->addNoticeMessage('Pro úpravu knihy je nutné odeslat formulář.');
+            header('Location: ' . BASE_URL . '/index.php');
+            exit;
         }
     }
     
