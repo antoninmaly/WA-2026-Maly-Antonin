@@ -62,14 +62,19 @@ require_once '../app/views/layout/header.php';
         </div>
 
         <div class="flex flex-col space-y-4">
-            <label class="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-bold text-center block">Obrázky (můžete nahrát více)</label>
+            <label class="text-[10px] uppercase tracking-[0.2em] text-[#d4af37] font-bold text-center block">Obrázky knihy (můžete nahrát více)</label>
             <label for="images" class="border-2 border-dashed border-white/10 hover:border-[#d4af37]/50 hover:bg-white/5 transition-all cursor-pointer rounded-sm p-8 text-center flex flex-col items-center group">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-600 group-hover:text-[#d4af37] transition-colors mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span class="text-xs text-white group-hover:text-[#d4af37] transition-colors uppercase tracking-widest font-bold">Klikni pro výběr souborů</span>
-                <span class="text-[10px] text-neutral-600 uppercase mt-1 tracking-tighter">JPG / PNG / WebP</span>
-                <input type="file" id="images" name="images[]" multiple accept="image/*" class="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-neutral-600 group-hover:text-[#d4af37] transition-colors mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span id="file-title" class="text-xs text-white group-hover:text-[#d4af37] transition-colors uppercase tracking-widest font-bold">
+            Klikni pro výběr souborů
+            </span>
+            <span id="file-info" class="text-[10px] text-neutral-600 uppercase mt-1 tracking-tighter">
+            JPG / PNG / WebP
+            </span>
+        
+            <input type="file" id="images" name="images[]" multiple accept="image/*" class="hidden">
             </label>
         </div>
 
@@ -81,6 +86,35 @@ require_once '../app/views/layout/header.php';
 
     </form>
 </div>
+
+<script>
+    // Najdeme naše HTML prvky podle ID
+    const fileInput = document.getElementById('images');
+    const fileTitle = document.getElementById('file-title');
+    const fileInfo = document.getElementById('file-info');
+
+    // Posloucháme událost 'change' (změna hodnoty v inputu)
+    fileInput.addEventListener('change', function(event) {
+        const files = event.target.files;
+        
+        if (files.length === 0) {
+            // Uživatel výběr zrušil - vracíme původní vzhled
+            fileTitle.textContent = 'Klikni pro výběr souborů';
+            fileTitle.className = 'text-xs text-white uppercase tracking-widest font-bold';
+            fileInfo.textContent = 'JPG / PNG / WebP';
+        } else if (files.length === 1) {
+            // Vybrán 1 soubor - změníme text na zlatý
+            fileTitle.textContent = 'Soubor připraven';
+            fileTitle.className = 'text-xs text-[#d4af37] uppercase tracking-widest font-bold';
+            fileInfo.textContent = files[0].name;
+        } else {
+            // Vybráno více souborů - změníme text na zlatý a ukážeme počet
+            fileTitle.textContent = 'Soubory připraveny';
+            fileTitle.className = 'text-xs text-[#d4af37] uppercase tracking-widest font-bold';
+            fileInfo.textContent = 'Vybráno celkem: ' + files.length + ' souborů';
+        }
+    });
+</script>
 
 <?php 
 // Načtení sdílené patičky

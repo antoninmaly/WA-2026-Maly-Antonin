@@ -45,8 +45,16 @@ class BookController {
             $link = htmlspecialchars($_POST['link'] ?? '');
             $description = htmlspecialchars($_POST['description'] ?? '');
 
-            // Prozatímní zástupce pro obrázky (bude řešeno v budoucnu)
-            $uploadedImages = []; 
+            // ... předchozí kód pro získání textových dat z $_POST ...
+
+            $link = htmlspecialchars($_POST['link'] ?? '');
+            $description = htmlspecialchars($_POST['description'] ?? '');
+
+            // ZDE JE ZMĚNA: Zavolání metody, která zpracuje soubory v $_FILES
+            // Vrátí nám hezké pole s novými názvy (např. ['book_123.jpg', 'book_456.png'])
+            $uploadedImages = $this->processImageUploads(); 
+
+            // ... zbytek kódu zůstává beze změny ...
 
             // 2. Komunikace s databází a modelem
             require_once '../app/models/Database.php';
@@ -99,36 +107,54 @@ class BookController {
         $_SESSION['messages']['error'][] = $message;
     }
 
-    // 3. Smazání existující knihy
+    // 3. Smazání existující knihy včetně fyzických souborů
     public function delete($id = null) {
-        // Kontrola, zda bylo v URL předáno ID
         if (!$id) {
             $this->addErrorMessage('Nebylo zadáno ID knihy ke smazání.');
             header('Location: ' . BASE_URL . '/index.php');
             exit;
         }
 
-        // Načtení potřebných tříd a spojení s databází
         require_once '../app/models/Database.php';
         require_once '../app/models/Book.php';
 
         $database = new Database();
         $db = $database->getConnection();
-
-        // Inicializace modelu a zavolání metody pro smazání
         $bookModel = new Book($db);
-        $isDeleted = $bookModel->delete($id);
 
-        // Vyhodnocení výsledku a přesměrování s notifikací
-        if ($isDeleted) {
-            // Zelená zpráva o úspěchu
-            $this->addSuccessMessage('Kniha byla trvale smazána z databáze.');
+        // --- NOVÝ KÓD PRO MAZÁNÍ SOUBORŮ ---
+        
+        // 1. Nejdříve získáme data knihy, abychom znali názvy souborů
+        $book = $bookModel->getById($id);
+        
+        if ($book) {
+            // Převedeme JSON s obrázky na pole
+            $images = json_decode($book['images'] ?? '[]', true);
+            
+            // Definujeme cestu ke složce uploads
+            $uploadDir = __DIR__ . '/../../public/uploads/';
+
+            // 2. Smažeme záznam z databáze
+            $isDeleted = $bookModel->delete($id);
+
+            if ($isDeleted) {
+                // 3. Pokud se smazání z DB povedlo, projdeme pole a smažeme soubory z disku
+                foreach ($images as $img) {
+                    $filePath = $uploadDir . $img;
+                    
+                    // Kontrola, zda soubor na disku skutečně existuje, než ho smažeme
+                    if (file_exists($filePath)) {
+                        unlink($filePath); // Funkce unlink fyzicky smaže soubor
+                    }
+                }
+                $this->addSuccessMessage('Kniha i její obrázky byly trvale smazány.');
+            } else {
+                $this->addErrorMessage('Nastala chyba. Knihu se nepodařilo smazat z databáze.');
+            }
         } else {
-            // Červená zpráva pro případ, že kniha neexistovala nebo selhal dotaz
-            $this->addErrorMessage('Nastala chyba. Knihu se nepodařilo smazat.');
+            $this->addErrorMessage('Kniha nebyla nalezena.');
         }
 
-        // Vždy následuje návrat na seznam knih
         header('Location: ' . BASE_URL . '/index.php');
         exit;
     }
@@ -192,36 +218,43 @@ class BookController {
             $link = htmlspecialchars($_POST['link'] ?? '');
             $description = htmlspecialchars($_POST['description'] ?? '');
 
-            // Prozatímní zástupce pro obrázky
-            $uploadedImages = []; 
-
-            // 2. Komunikace s databází a modelem
+            // 2. Příprava databáze a modelu
             require_once '../app/models/Database.php';
             require_once '../app/models/Book.php';
 
             $database = new Database();
             $db = $database->getConnection();
-
-            // 3. Volání updatu nad modelem
             $bookModel = new Book($db);
+
+            // 3. ZPRACOVÁNÍ OBRÁZKŮ (Zachování starých + přidání nových)
+            
+            // Nejprve získáme aktuální data knihy z DB
+            $existingBook = $bookModel->getById($id);
+            // Původní obrázky jsou uložené jako JSON, převedeme je na pole (pokud neexistují, prázdné pole)
+            $currentImages = json_decode($existingBook['images'] ?? '[]', true);
+
+            // Zavolání pomocné metody pro zpracování nových souborů v $_FILES
+            $newImages = $this->processImageUploads(); 
+
+            // Sloučení starých a nových obrázků do jednoho pole
+            $uploadedImages = array_merge($currentImages, $newImages);
+
+            // 4. Volání updatu nad modelem s kompletním polem obrázků
             $isUpdated = $bookModel->update(
                 $id, $title, $author, $category, $subcategory, 
                 $year, $price, $isbn, $description, $link, $uploadedImages
             );
 
-            // 4. Vyhodnocení výsledku a přesměrování
+            // 5. Vyhodnocení výsledku a přesměrování
             if ($isUpdated) {
-                // Vyvolání zelené notifikace o úspěchu
                 $this->addSuccessMessage('Kniha byla úspěšně upravena.');
                 header('Location: ' . BASE_URL . '/index.php');
                 exit;
             } else {
-                // Vyvolání červené chybové notifikace
                 $this->addErrorMessage('Nastala chyba. Změny se nepodařilo uložit.');
             }
             
         } else {
-            // Pokud by někdo zkusil přistoupit na URL napřímo bez odeslání formuláře (žlutá notifikace)
             $this->addNoticeMessage('Pro úpravu knihy je nutné odeslat formulář.');
         }
     }
@@ -255,6 +288,53 @@ class BookController {
 
         // Načtení pohledu pro detail knihy
         require_once '../app/views/books/book_show.php';
+    }
+
+    // --- Pomocná metoda pro zpracování nahrávání obrázků ---
+    protected function processImageUploads() {
+        $uploadedFiles = [];
+        
+        // Cesta ke složce, kam se budou obrázky fyzicky ukládat (relativně od index.php)
+        $uploadDir = __DIR__ . '/../../public/uploads/'; 
+        
+        // Zkontrolujeme, zda vůbec existuje adresář, pokud ne, vytvoříme ho
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        // Zkontrolujeme, zda byl odeslán alespoň jeden soubor
+        if (isset($_FILES['images']) && !empty($_FILES['images']['name'][0])) {
+            $fileCount = count($_FILES['images']['name']);
+
+            for ($i = 0; $i < $fileCount; $i++) {
+                // Pokud při nahrávání tohoto konkrétního souboru nedošlo k chybě
+                if ($_FILES['images']['error'][$i] === UPLOAD_ERR_OK) {
+                    
+                    $tmpName = $_FILES['images']['tmp_name'][$i];
+                    $originalName = basename($_FILES['images']['name'][$i]);
+                    // Zjištění koncovky (např. jpg, png)
+                    $fileExtension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+                    // Můžeme zde přidat i kontrolu povolených formátů (volitelné)
+                    $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+                    if (!in_array($fileExtension, $allowedExtensions)) {
+                        continue; // Přeskočíme nepodporovaný soubor
+                    }
+
+                    // 1. Vygenerování unikátního jména pomocí aktuálního času a náhodného řetězce
+                    // např: book_64a2b1c_8f2a.jpg
+                    $newName = 'book_' . uniqid() . '_' . substr(md5(mt_rand()), 0, 4) . '.' . $fileExtension;
+                    $targetFilePath = $uploadDir . $newName;
+
+                    // 2. Fyzický přesun souboru z dočasné paměti do naší složky uploads
+                    if (move_uploaded_file($tmpName, $targetFilePath)) {
+                        // 3. Uložení POUZE NÁZVU do pole, které pak pošleme databázi
+                        $uploadedFiles[] = $newName; 
+                    }
+                }
+            }
+        }
+        return $uploadedFiles;
     }
 
 }
