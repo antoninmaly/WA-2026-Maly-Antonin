@@ -35,6 +35,22 @@ class AuthController {
                 exit;
             }
 
+            // --- SAMOSTATNÁ PRÁCE: VYNUCENÍ BEZPEČNÉHO HESLA ---
+
+            // Pravidlo 1: Minimální délka 8 znaků
+            if (strlen($password) < 8) {
+                $this->addErrorMessage('Heslo je příliš krátké. Musí mít alespoň 8 znaků.');
+                header('Location: ' . BASE_URL . '/index.php?url=auth/register');
+                exit;
+            }
+
+            // Pravidlo 2: Musí obsahovat alespoň jednu číslici (pomocí regulárního výrazu)
+            if (!preg_match('/[0-9]/', $password)) {
+                $this->addErrorMessage('Heslo musí obsahovat alespoň jednu číslici.');
+                header('Location: ' . BASE_URL . '/index.php?url=auth/register');
+                exit;
+            }
+
             // Napojení na DB a Model
             require_once '../app/models/Database.php';
             require_once '../app/models/User.php';
