@@ -325,10 +325,14 @@ class BookController {
                 $uploadedImages = $newImages;
             }
 
+            $userId = $_SESSION['user_id'];
+            
             // 5. Uložení všech změn do databáze
             $isUpdated = $bookModel->update(
                 $id, $title, $author, $category, $subcategory, 
-                $year, $price, $isbn, $description, $link, $uploadedImages
+                $year, $price, $isbn, $description, $link,
+                $userId,
+                $uploadedImages
             );
 
             // 6. Vyhodnocení a přesměrování

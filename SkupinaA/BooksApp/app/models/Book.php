@@ -65,7 +65,9 @@ class Book {
     // Aktualizace existující knihy
     public function update(
         $id, $title, $author, $category, $subcategory, 
-        $year, $price, $isbn, $description, $link, $images = []
+        $year, $price, $isbn, $description, $link,
+        int $userId,
+        $images = []
     ) {
         $sql = "UPDATE books 
                 SET title = :title, 
@@ -77,7 +79,8 @@ class Book {
                     isbn = :isbn, 
                     description = :description, 
                     link = :link, 
-                    images = :images
+                    images = :images,
+                    updated_by = :updated_by
                 WHERE id = :id";
                 
         $stmt = $this->db->prepare($sql);
@@ -94,7 +97,8 @@ class Book {
             ':isbn' => $isbn,
             ':description' => $description,
             ':link' => $link,
-            ':images' => json_encode($images)
+            ':images' => json_encode($images),
+            ':updated_by' => $userId
         ]);
     }
 
