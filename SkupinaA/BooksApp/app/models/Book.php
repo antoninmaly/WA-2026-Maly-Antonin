@@ -19,9 +19,10 @@ class Book {
         string $description,
         string $link,
         array $images,
+        int $userId // !!! ZMĚNA: NOVÝ PARAMETR PRO ID UŽIVATELE
     ): bool {
-        $sql = "INSERT INTO books (title, author, category, subcategory, year, price, isbn, description, link, images)
-                VALUES (:title, :author, :category, :subcategory, :year, :price, :isbn, :description, :link, :images)";
+        $sql = "INSERT INTO books (title, author, category, subcategory, year, price, isbn, description, link, images, created_by)
+                VALUES (:title, :author, :category, :subcategory, :year, :price, :isbn, :description, :link, :images, :created_by)";
         // stmt = statement
         $stmt = $this->db->prepare($sql);
 
@@ -35,7 +36,8 @@ class Book {
             ':isbn' => $isbn,
             ':description' => $description,
             ':link' => $link,
-            ':images' => json_encode($images)
+            ':images' => json_encode($images),
+            ':created_by' => $userId // !!! ZMĚNA: Předání ID do databáze
         ]);
     }
 

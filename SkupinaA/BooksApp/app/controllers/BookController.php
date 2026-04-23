@@ -22,6 +22,13 @@ class BookController {
 
     // 1. Zobrazení formuláře pro přidání nové knihy
     public function create() {
+         // !!! ZMĚNA: Autorizace: Pokud uživatel není přihlášen, nemá tu co dělat
+        if (!isset($_SESSION['user_id'])) {
+            $this->addErrorMessage('Pro přidání knihy se musíte nejprve přihlásit.');
+            header('Location: ' . BASE_URL . '/index.php?url=auth/login');
+            exit;
+        }
+
         // Zde se pouze načte (vloží) připravený soubor s HTML formulářem
         require_once '../app/views/books/book_create.php';
     }
@@ -30,6 +37,15 @@ class BookController {
     public function store() {
         // Kontrola, zda byl formulář odeslán metodou POST
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+            // !!! ZMĚNA: ZDE PŘIDÁME KONTROLU PŘIHLÁŠENÍ ---
+            if (!isset($_SESSION['user_id'])) {
+                $this->addErrorMessage('Pro uložení knihy musíte být přihlášeni.');
+                header('Location: ' . BASE_URL . '/index.php?url=auth/login');
+                exit;
+            }
+            $userId = $_SESSION['user_id'];
+            // ---------------------------------------
             
             // 1. Získání a očištění textových dat (ochrana proti XSS)
             $title = htmlspecialchars($_POST['title'] ?? '');
@@ -68,7 +84,8 @@ class BookController {
             $bookModel = new Book($db);
             $isSaved = $bookModel->create(
                 $title, $author, $category, $subcategory, 
-                $year, $price, $isbn, $description, $link, $uploadedImages
+                $year, $price, $isbn, $description, $link, $uploadedImages,
+                $userId // PŘEDÁVÁME ID UŽIVATELE
             );
 
             // 3. Vyhodnocení výsledku a přesměrování
@@ -90,7 +107,7 @@ class BookController {
         }
     }
 
-       // --- Pomocné metody pro systém notifikací ---
+    // --- Pomocné metody pro systém notifikací ---
 
     protected function addSuccessMessage($message) {
         // Zelená zpráva o úspěchu
@@ -109,6 +126,15 @@ class BookController {
 
     // 3. Smazání existující knihy včetně fyzických souborů
     public function delete($id = null) {
+
+        // 🔒 ZMĚNA: Kontrola autentizace. 
+        // Pouze přihlášený uživatel může iniciovat proces mazání.
+        if (!isset($_SESSION['user_id'])) {
+            $this->addErrorMessage('Pro smazání knihy se musíte nejprve přihlásit.');
+            header('Location: ' . BASE_URL . '/index.php?url=auth/login');
+            exit;
+        }
+
         if (!$id) {
             $this->addErrorMessage('Nebylo zadáno ID knihy ke smazání.');
             header('Location: ' . BASE_URL . '/index.php');
@@ -126,6 +152,19 @@ class BookController {
         
         // 1. Nejdříve získáme data knihy, abychom znali názvy souborů
         $book = $bookModel->getById($id);
+
+         if (!$book) {
+        $this->addErrorMessage('Kniha nebyla nalezena, pravděpodobně již byla smazána.');
+        header('Location: ' . BASE_URL . '/index.php');
+        exit;
+        }
+
+        // Ověříme, zda je aktuálně přihlášený uživatel autorem záznamu.
+        if ($book['created_by'] !== $_SESSION['user_id']) {
+            $this->addErrorMessage('Nemáte oprávnění smazat tuto knihu, protože nejste jejím autorem.');
+            header('Location: ' . BASE_URL . '/index.php');
+            exit;
+        }
         
         if ($book) {
             // Převedeme JSON s obrázky na pole
@@ -161,6 +200,15 @@ class BookController {
 
     // 4. Zobrazení formuláře pro úpravu existující knihy
     public function edit($id = null) {
+
+        // 🔒 !!! ZMĚNA: Kontrola, zda je uživatel přihlášen. 
+        // Pokud není, nepustíme ho ani k načítání dat z DB.
+        if (!isset($_SESSION['user_id'])) {
+            $this->addErrorMessage('Pro úpravu knihy se musíte nejprve přihlásit.');
+            header('Location: ' . BASE_URL . '/index.php?url=auth/login');
+            exit;
+        }
+
         // Kontrola, zda bylo v URL vůbec předáno nějaké ID
         if (!$id) {
             // Vyvolání červené notifikace pro kritickou chybu
@@ -188,6 +236,14 @@ class BookController {
             exit;
         }
 
+        // 🛡️ !!! ZMĚNA: Kontrola vlastnictví (Autorizace).
+        // Ověříme, zda ID přihlášeného uživatele odpovídá ID autora uloženého u knihy.
+        if ($book['created_by'] !== $_SESSION['user_id']) {
+            $this->addErrorMessage('Nemáte oprávnění upravovat tuto knihu, protože nejste jejím autorem.');
+            header('Location: ' . BASE_URL . '/index.php');
+            exit;
+        }
+
         // Pokud je vše v pořádku, načte se připravený soubor s HTML formulářem pro úpravy.
         // Šablona bude mít automaticky přístup k proměnné $book.
         require_once '../app/views/books/book_edit.php';
@@ -204,6 +260,34 @@ class BookController {
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
+            // 🔒 ZMĚNA: Kontrola, zda je uživatel vůbec přihlášen.
+            if (!isset($_SESSION['user_id'])) {
+                $this->addErrorMessage('Pro uložení změn se musíte nejprve přihlásit.');
+                header('Location: ' . BASE_URL . '/index.php?url=auth/login');
+                exit;
+            }
+        
+            // 🛡️ ZMĚNA: Komunikaci s databází jsme museli přesunout nahoru.
+            // Musíme totiž nejprve zjistit, čí ta kniha vlastně je, než cokoli změníme.
+            require_once '../app/models/Database.php';
+            require_once '../app/models/Book.php';
+
+            $database = new Database();
+            $db = $database->getConnection();
+            $bookModel = new Book($db);
+
+            $book = $bookModel->getById($id);
+
+            // 🛡️ ZMĚNA: Kontrola vlastnictví (Autorizace) - "Skutečná zeď".
+            // Pokud kniha neexistuje, nebo ID autora nesouhlasí s přihlášeným uživatelem, je nutné ukládání přerušit.
+            if (!$book || $book['created_by'] !== $_SESSION['user_id']) {
+                $this->addErrorMessage('Nemáte oprávnění ukládat změny u této knihy, protože nejste jejím autorem.');
+                header('Location: ' . BASE_URL . '/index.php');
+                exit;
+            }
+
+            // --- POKUD KONTROLY PROŠLY, POKRAČUJEME VE ZPRACOVÁNÍ DAT ---
+
             // 2. Načtení a vyčištění textových dat z formuláře
             $title = htmlspecialchars($_POST['title'] ?? '');
             $author = htmlspecialchars($_POST['author'] ?? '');
