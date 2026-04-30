@@ -28,9 +28,24 @@ require_once '../app/views/layout/header.php';
                 <input type="text" id="isbn" name="isbn" class="px-4 py-3 rounded-sm" required>
             </div>
 
-            <div class="flex flex-col space-y-2">
-                <label for="category" class="text-[10px] uppercase tracking-[0.2em] text-blue-400 font-black">Kategorie <span class="text-rose-500">*</span></label>
-                <input type="text" id="category" name="category" class="px-4 py-3 rounded-sm" required>
+            <div class="flex flex-col space-y-2 text-slate-200">
+                <label for="category" class="text-[10px] uppercase tracking-[0.2em] text-blue-400 font-black">
+                    Kategorie <span class="text-rose-500">*</span>
+                </label>
+    
+                <select id="category" name="category" 
+                    class="px-4 py-3 rounded-sm bg-slate-800 text-white border border-slate-700 focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none appearance-none cursor-pointer" 
+                    required>
+        
+                    <option value="" disabled selected class="bg-slate-800 text-slate-400">-- Vyberte kategorii --</option>
+                    
+                    <?php foreach ($categories as $cat): ?>
+                        <option value="<?= htmlspecialchars($cat['id']) ?>" class="bg-slate-800 text-white">
+                            <?= htmlspecialchars($cat['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+        
+                </select>
             </div>
 
             <div class="flex flex-col space-y-2">
