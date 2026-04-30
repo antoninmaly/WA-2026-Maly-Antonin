@@ -32,6 +32,7 @@ class BookController {
         // ZMĚNA 2: Načtení databáze a nového modelu Category
         require_once '../app/models/Database.php';
         require_once '../app/models/Category.php';
+        require_once '../app/models/Subcategory.php';
 
         $database = new Database();
         $db = $database->getConnection();
@@ -39,6 +40,9 @@ class BookController {
         // ZMĚNA 3: Získání seznamu kategorií
         $categoryModel = new Category($db);
         $categories = $categoryModel->getAllCategories();
+
+        $subcategoryModel = new Subcategory($db);
+        $subcategories = $subcategoryModel->getAllSubcategories();
 
         // Zde se pouze načte (vloží) připravený soubor s HTML formulářem
         require_once '../app/views/books/book_create.php';
@@ -63,7 +67,7 @@ class BookController {
             $author = htmlspecialchars($_POST['author'] ?? '');
             $isbn = htmlspecialchars($_POST['isbn'] ?? '');
             $category = (int)($_POST['category'] ?? 0);
-            $subcategory = htmlspecialchars($_POST['subcategory'] ?? '');
+            $subcategory = (int)($_POST['subcategory'] ?? 0);
             
             // U číselných hodnot se provádí explicitní přetypování
             $year = (int)($_POST['year'] ?? 0);
@@ -232,6 +236,7 @@ class BookController {
         require_once '../app/models/Database.php';
         require_once '../app/models/Book.php';
         require_once '../app/models/Category.php';
+        require_once '../app/models/Subcategory.php';
 
 
         $database = new Database();
@@ -240,6 +245,9 @@ class BookController {
         // ZMĚNA: Získání seznamu kategorií
         $categoryModel = new Category($db);
         $categories = $categoryModel->getAllCategories();
+
+        $subcategoryModel = new Subcategory($db);
+        $subcategories = $subcategoryModel->getAllSubcategories();
 
         // Získání dat o konkrétní knize
         $bookModel = new Book($db);
@@ -310,7 +318,7 @@ class BookController {
             $author = htmlspecialchars($_POST['author'] ?? '');
             $isbn = htmlspecialchars($_POST['isbn'] ?? '');
             $category = (int)($_POST['category'] ?? 0);
-            $subcategory = htmlspecialchars($_POST['subcategory'] ?? '');
+            $subcategory = (int)($_POST['subcategory'] ?? 0);
             
             $year = (int)($_POST['year'] ?? 0);
             $price = (float)($_POST['price'] ?? 0);

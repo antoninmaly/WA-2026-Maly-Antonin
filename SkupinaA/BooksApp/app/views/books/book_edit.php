@@ -57,6 +57,24 @@ require_once '../app/views/layout/header.php';
                 </select>
             </div>
 
+            <div class="mb-4">
+                <label for="subcategory" class="block text-gray-700 text-sm font-bold mb-2">Subkategorie *</label>
+                
+                <select id="subcategory" name="subcategory" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <option value="">-- Vyberte subkategorii --</option>
+                    
+                    <?php foreach ($subcategories as $subcat): ?>
+                        <?php 
+                        $isSelected = ($book['subcategory'] == $subcat['id']) ? 'selected' : ''; 
+                        ?>
+                        <option value="<?= htmlspecialchars($subcat['id']) ?>" <?= $isSelected ?>>
+                            <?= htmlspecialchars($subcat['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                    
+                </select>
+            </div>
+            
             <div class="flex flex-col space-y-2">
                 <label for="year" class="text-[10px] uppercase tracking-[0.2em] text-blue-400 font-black">Rok vydání <span class="text-rose-500">*</span></label>
                 <input type="number" id="year" name="year" value="<?= htmlspecialchars($book['year']) ?>" class="px-4 py-3 rounded-sm" required>
