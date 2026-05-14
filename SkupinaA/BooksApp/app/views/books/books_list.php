@@ -22,6 +22,7 @@ require_once '../app/views/layout/header.php';
         <div class="hidden md:grid grid-cols-12 gap-4 px-8 py-4 text-[10px] uppercase tracking-[0.3em] text-blue-900 font-black">
             <div class="col-span-1">ID</div>
             <div class="col-span-4">Název & Autor</div>
+            <div class="col-span-4">Kategorie</div>
             <div class="col-span-2 text-center">Rok vydání</div>
             <div class="col-span-2 text-right">Cena</div>
             <div class="col-span-3 text-right">Akce</div>
@@ -40,7 +41,9 @@ require_once '../app/views/layout/header.php';
                     </h3>
                     <p class="text-blue-500/40 text-[10px] uppercase font-bold tracking-widest"><?= htmlspecialchars($book['author']) ?></p>
                 </div>
-                
+                <div class="px-6 py-4 text-emerald-400 font-medium">
+                     <?= htmlspecialchars($book['category_name'] ?? 'Nezařazeno') ?>
+                </div>
                 <div class="col-span-4 md:col-span-2 text-left md:text-center text-gray-400">
                     <?= htmlspecialchars($book['year']) ?>
                 </div>

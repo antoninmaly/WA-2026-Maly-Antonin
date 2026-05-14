@@ -43,11 +43,15 @@ class Book {
 
     // Získání všech knih z databáze
     public function getAll() {
-        $sql = "SELECT * FROM books ORDER BY id DESC";
+        // 💡 ZMĚNA: Místo "SELECT *" použijeme přesnější dotaz s JOINem
+        $sql = "SELECT books.*, categories.name AS category_name 
+                FROM books 
+                LEFT JOIN categories ON books.category = categories.id 
+                ORDER BY books.id DESC";
+                
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         
-        // Vrací pole asociativních polí (každý řádek z DB je jedno pole)
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
