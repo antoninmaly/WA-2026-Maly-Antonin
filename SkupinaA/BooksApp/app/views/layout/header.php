@@ -50,8 +50,11 @@
                                 + Přidat knihu
                             </a>
                         </li>
-                        <li class="text-slate-400 text-sm">
-                            Ahoj, <span class="text-white font-semibold tracking-wide"><?= htmlspecialchars($_SESSION['user_name']) ?></span>
+                        <li class="text-slate-400 text-sm flex items-center gap-2">
+                            <span>Ahoj, <span class="text-white font-semibold tracking-wide"><?= htmlspecialchars($_SESSION['user_name']) ?></span></span>
+                            <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1): ?>
+                                <span class="bg-rose-600 text-white text-[9px] uppercase font-black px-2 py-0.5 rounded-sm tracking-widest shadow-lg border border-rose-500">Admin</span>
+                            <?php endif; ?>
                         </li>
                         <li>
                             <a href="<?= BASE_URL ?>/index.php?url=auth/logout" class="text-rose-400 hover:text-white transition-colors text-sm uppercase tracking-wider font-medium">
