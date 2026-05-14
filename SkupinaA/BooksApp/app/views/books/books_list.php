@@ -55,12 +55,21 @@ require_once '../app/views/layout/header.php';
                 <div class="col-span-12 md:col-span-3 flex justify-start md:justify-end items-center space-x-2 mt-4 md:mt-0 pt-4 md:pt-0 border-t border-blue-500/10 md:border-0">
                     <a href="<?= BASE_URL ?>/index.php?url=book/show/<?= $book['id'] ?>" class="text-[9px] px-3 py-2 bg-blue-600/10 border border-blue-500/20 uppercase tracking-widest text-blue-400 hover:bg-blue-600 hover:text-white transition-all">Detail</a>
                     <?php 
-                    $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
-                    if (isset($_SESSION['user_id']) && ($_SESSION['user_id'] === $book['created_by'] || $isAdmin)): 
-                    ?>
-                        | <a href="<?= BASE_URL ?>/index.php?url=book/edit/<?= $book['id'] ?>"class="text-[9px] px-3 py-2 border border-blue-500/20 uppercase tracking-widest text-gray-400 hover:text-white transition-all">Upravit</a>
-                        | <a href="<?= BASE_URL ?>/index.php?url=book/delete/<?= $book['id'] ?>" onclick="return confirm('Opravdu chcete tuto knihu smazat?')" class="text-[9px] px-3 py-2 border border-rose-900/30 uppercase tracking-widest text-rose-500/70 hover:text-rose-400 transition-all">Smazat</a>
-                    <?php endif; ?>
+                        $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
+                        $isOwner = isset($_SESSION['user_id']) && $_SESSION['user_id'] === $book['created_by'];
+
+                        if ($isOwner || $isAdmin): 
+                            // Pokud je uživatel vlastník, použijeme standardní barvy. Pokud ne (zasahuje admin), použijeme varovné oranžové/žluté barvy.
+                            $editClass = $isOwner ? "border-blue-500/20 text-gray-400 hover:text-white" : "border-amber-500/30 text-amber-400 hover:text-amber-200 bg-amber-900/10";
+                            $deleteClass = $isOwner ? "border-rose-900/30 text-rose-500/70 hover:text-rose-400" : "border-amber-900/40 text-amber-500/80 hover:text-amber-300 bg-amber-900/10";
+                        ?>
+                            | <a href="<?= BASE_URL ?>/index.php?url=book/edit/<?= $book['id'] ?>" class="text-[9px] px-3 py-2 border uppercase tracking-widest transition-all <?= $editClass ?>">
+                                Upravit <?= !$isOwner ? '(Admin)' : '' ?>
+                            </a>
+                            | <a href="<?= BASE_URL ?>/index.php?url=book/delete/<?= $book['id'] ?>" onclick="return confirm('Opravdu chcete tuto knihu smazat?')" class="text-[9px] px-3 py-2 border uppercase tracking-widest transition-all <?= $deleteClass ?>">
+                                Smazat <?= !$isOwner ? '(Admin)' : '' ?>
+                            </a>
+                        <?php endif; ?>
                 </div>
             </div>
         <?php endforeach; ?>
