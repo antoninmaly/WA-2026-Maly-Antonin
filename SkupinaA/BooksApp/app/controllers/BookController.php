@@ -174,12 +174,24 @@ class BookController {
         exit;
         }
 
-        // Ověříme, zda je aktuálně přihlášený uživatel autorem záznamu.
-        if ($book['created_by'] !== $_SESSION['user_id']) {
-            $this->addErrorMessage('Nemáte oprávnění smazat tuto knihu, protože nejste jejím autorem.');
+        // // Ověříme, zda je aktuálně přihlášený uživatel autorem záznamu.
+        // if ($book['created_by'] !== $_SESSION['user_id']) {
+        // $this->addErrorMessage('Nemáte oprávnění smazat tuto knihu, protože nejste jejím autorem.');
+        // header('Location: ' . BASE_URL . '/index.php');
+        // exit;
+        // }
+
+        // 💡 ZMĚNA: Zjistíme, zda je přihlášený uživatel admin
+        $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
+
+        // 🛡️ ZMĚNA: Vyhodíme uživatele POKUD NENÍ autor A ZÁROVEŇ NENÍ admin
+        if ($book['created_by'] !== $_SESSION['user_id'] && !$isAdmin) {
+            $this->addErrorMessage('Nemáte oprávnění upravovat tuto knihu.');
             header('Location: ' . BASE_URL . '/index.php');
             exit;
         }
+
+
         
         if ($book) {
             // Převedeme JSON s obrázky na pole
@@ -261,10 +273,20 @@ class BookController {
             exit;
         }
 
-        // 🛡️ !!! ZMĚNA: Kontrola vlastnictví (Autorizace).
-        // Ověříme, zda ID přihlášeného uživatele odpovídá ID autora uloženého u knihy.
-        if ($book['created_by'] !== $_SESSION['user_id']) {
-            $this->addErrorMessage('Nemáte oprávnění upravovat tuto knihu, protože nejste jejím autorem.');
+        // // 🛡️ !!! ZMĚNA: Kontrola vlastnictví (Autorizace).
+        // // Ověříme, zda ID přihlášeného uživatele odpovídá ID autora uloženého u knihy.
+        // if ($book['created_by'] !== $_SESSION['user_id']) {
+        //     $this->addErrorMessage('Nemáte oprávnění upravovat tuto knihu, protože nejste jejím autorem.');
+        //     header('Location: ' . BASE_URL . '/index.php');
+        //     exit;
+        // }
+
+        // 💡 ZMĚNA: Zjistíme, zda je přihlášený uživatel admin
+        $isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1;
+
+        // 🛡️ ZMĚNA: Vyhodíme uživatele POKUD NENÍ autor A ZÁROVEŇ NENÍ admin
+        if ($book['created_by'] !== $_SESSION['user_id'] && !$isAdmin) {
+            $this->addErrorMessage('Nemáte oprávnění upravovat tuto knihu.');
             header('Location: ' . BASE_URL . '/index.php');
             exit;
         }
